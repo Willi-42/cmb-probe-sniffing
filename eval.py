@@ -23,7 +23,7 @@ def is_signal_good(rssi):
     return False
 
 
-def parse_data(file):
+def get_raw_data(file):
     packets = rdpcap(file)
 
     data = pd.DataFrame(
@@ -43,12 +43,21 @@ def parse_data(file):
 
         # print(f"{src}, {timestamp}, {rssi} {is_rssi_good else}, {is_global}")
 
+    basetime = data['timestamp'][0]
+    data['time'] = pd.to_datetime(data['timestamp'] - basetime, unit='ms')
+
     return data
+
+
+def get_filtered_data(file):
+    data = get_raw_data(file)
+
+    return data.loc[data["rssi"] > -80]
 
 
 def main():
     """Starts the script"""
-    data = parse_data("./data.pcap")
+    data = get_raw_data("./data.pcap")
 
     value_cnts = data['local'].value_counts()
     global_cnt = value_cnts[0]

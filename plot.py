@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import datetime as dt
 import pandas as pd
-from eval import parse_data
+from eval import get_filtered_data, get_raw_data
 
 
 def save_graph(ax, fig, image_name, legend, yname):
@@ -20,20 +20,13 @@ def save_graph(ax, fig, image_name, legend, yname):
     plt.close()
 
 
-def main():
-    """Starts the script"""
-
-    data = parse_data("./data.pcap")
+def plot_local_global_chart(file):
+    data = get_filtered_data(file)
 
     data['global'] = 1 - data['local']  # add global column
 
-    print(data)
-
     # groupe data to 1s
-    basetime = data['timestamp'][0]
-    data['time'] = pd.to_datetime(data['timestamp'] - basetime, unit='ms')
-
-    grouped = data.groupby(pd.Grouper(key='time', freq='1s')).sum()
+    grouped = data.groupby(pd.Grouper(key='time', freq='10s')).sum()
 
     # draw graph
     legend = []
@@ -41,13 +34,43 @@ def main():
 
     fig, ax = plt.subplots(dpi=300)
 
-    ax.plot(grouped.index, grouped['local'], linestyle='-')
+    ax.stackplot(grouped.index, grouped['local'], linestyle='-')
     legend.append("local")
 
-    ax.plot(grouped.index, grouped['global'], linestyle='-')
+    ax.stackplot(grouped.index, grouped['global'], linestyle='-')
     legend.append("global")
 
     save_graph(ax, fig, image_name, legend, 'Mac')
+
+
+def plot_rssi(file):
+    data = get_raw_data(file)
+
+    # draw graph
+    legend = []
+    image_name = "./plot_rssi.png"
+
+    fig, ax = plt.subplots(dpi=300)
+
+    ax.ecdf(data['rssi'], linestyle='-')
+    legend.append("RSSI")
+
+    # ax.legend(legend)
+    ax.set_ylabel("distribution")
+    ax.set_xlabel('RSSI')
+    ax.grid(axis='y')
+    fig.tight_layout()
+    fig.savefig(image_name, bbox_inches='tight')
+    plt.close()
+
+
+def main():
+    """Starts the script"""
+
+    file = "./data.pcap"
+
+    plot_local_global_chart(file)
+    plot_rssi(file)
 
 
 if __name__ == "__main__":
