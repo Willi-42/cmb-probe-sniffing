@@ -6,7 +6,7 @@ Reduce noise:
 - remove packets with low rssi and only capture probe frames
 - is this enough for Quesiton 3
 
-## Hoq to
+## How to
 Install `tshark`.
 
 Set execution bit of `run_capture.sh`
